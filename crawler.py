@@ -28,10 +28,94 @@ class OnlineNFCrawler(object):
         print(r1.status_code)
         # Store response from next page in session
         r2 = self._session.get(self._url + self._ext2)
-        print(r2.status_code)
+        html = r2.text
+        tuples = html_to_tuples(html)
+        dict_ = tuples_to_dict(tuples)
         self.page = {
                 'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
                 'qr_code': qr_code,
-                'status': r2.status_code,
-                'html': r2.text
+                'data': dict_
             }
+
+def html_to_tuples(html):
+
+    result = []
+    soup = BeautifulSoup(html, 'lxml')
+
+    for tag in soup.find_all(['span', 'img']):
+
+        if tag.name == 'span':         
+            t1 = tag.string
+            if tag.get('class') == ['TituloAreaRestrita']:
+                if tag.string.strip() in HEADINGS_3:
+                    t0 = 'heading3'
+                elif tag.string.strip() in HEADINGS_2:
+                    t0 = 'heading2'
+                else:
+                    t0 = 'heading1'
+            elif tag.get('class') == ['TextoFundoBrancoNegrito']:
+                t0 = 'field'
+            elif tag.get('class') == ['linha']:
+                t0 = 'value'
+            if t0 in ['field', 'heading1', 'heading2', 'heading3']:
+                try:
+                    t1 = truncate_whitespace(unidecode(t1)).lower() \
+                                                           .replace(' ', '_')
+                except:
+                    continue
+            try:
+                t1 = truncate_whitespace(t1)
+            except: 
+                continue
+            result.append((t0, t1))
+
+        elif tag.name == 'img' and tag.get('title') == 'Detalhar':
+            result.append(('heading2', tag.next_element))
+
+    return result
+
+def tuples_to_dict(tuples):
+
+    result = {}
+    data = {}
+
+    heading1 = None
+    heading2 = None
+    heading3 = None
+    field = None
+    value = None
+
+    for t in tuples:
+
+        if t[0] == 'heading1':
+            result = {**result, **data}
+            data = {}
+            heading1 = t[1]
+            data[heading1] = {}
+            heading2 = None
+            heading3 = None
+            field = None
+            value = None
+        elif t[0] == 'heading2':
+            heading2 = t[1]
+            data[heading1][heading2] = {}
+            heading3 = None
+        elif t[0] == 'heading3':
+            heading3 = t[1]
+            data[heading1][heading2][heading3] = {}
+        elif t[0] == 'field':
+            field = t[1]
+            value = None
+        elif t[0] == 'value':
+            value = t[1]
+        if field and value:
+            if heading3:
+                data[heading1][heading2][heading3][field] = value
+            elif heading2:
+                data[heading1][heading2][field] = value
+            elif heading1:
+                data[heading1][field] = value
+            else:
+                data[field] = value
+
+    return result
