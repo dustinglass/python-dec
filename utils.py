@@ -1,6 +1,8 @@
 import re
 from datetime import datetime
 import json
+import string
+import unicodedata
 
 UNITS = {
     'ml': ['ml'],
@@ -14,9 +16,10 @@ RE_UNITS = [
     re.compile('([0-9],)*([0-9]+)\s*([A-z]+)\s'),
     re.compile('([0-9],)*([0-9]+)\s*([A-z]+)\W')
 ]
+PUNCTUATION = re.compile('[%s]' % re.escape(string.punctuation))
 
-class UnitString(object):
-
+class UnitString:
+    """ Class object with a string parsed into units if applicable. """
     def __init__(self, text):
 
         self.match = None
@@ -56,11 +59,24 @@ def read_from_json(file_name):
         return json.load(file)
 
 def truncate_whitespace(text):
-
+    """ Returns text with unnecessary whitespace removed. """
     text = text.replace('\r', ' ') \
-               .replace('\n', ' ') \
-               .replace('\t', ' ')
+               .replace('\n', ' ')
     text = text.strip()
     while '  ' in text:
         text = text.replace('  ', ' ')
     return text
+
+def normalize(text):
+    """ Return text as ASCII-normalized string. """
+    return unicodedata.normalize('NFKD', text) \
+                      .encode('ASCII', 'ignore') \
+                      .decode('utf-8')
+
+def standardize(text):
+    """ Returns text in lowercase with punctuation
+    and spaces replaced by underscores.
+    """
+    return truncate_whitespace(
+            PUNCTUATION.sub(' ', text)
+        ).replace(' ', '_').lower()
