@@ -1,7 +1,5 @@
 # python-dec
-Use this module to scrape an electronic receipt (nota fiscal eletrônica) from http://dec.fazenda.df.gov.br/.
-
-The DecCrawler class can take a QR code scanned from a printed receipt in Brazil and return detailed data from the electronic receipt as a Python dict with its get_nfe() method. Currently we only have support for the Federal District (Distrito Federal).
+Use this module to retrieve the data of an electronic receipt (nota fiscal eletrônica) from http://dec.fazenda.df.gov.br/. The DecCrawler class can take a QR code scanned from a printed receipt in Brazil and return detailed data from the electronic receipt as a Python dict with its get_nfe() method. Currently we only have support for the Federal District (Distrito Federal).
 
 ## Quickstart
 To demonstrate python-dec's functionality, scan a QR code from a receipt you have available and insert it into the following script:
