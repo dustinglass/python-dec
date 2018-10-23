@@ -1,3 +1,10 @@
+"""
+I use download_nfce() to download digital receipts based on scanned QR codes 
+from printed receipts in Brazil for the accounting of a non-profit that I 
+volunteer with in Brazil.
+"""
+
+
 import re
 import requests
 from lxml.html import fromstring
@@ -10,6 +17,7 @@ QR_CODE = 'http://dec.fazenda.df.gov.br/ConsultarNFCe.aspx?chNFe=531805077380690
 
 
 def download_nfce(qr_code):
+    # Downloads QR code content and saves with helpful name
     chave_de_acesso, valor = _parse_qr_code(qr_code)
     data_de_emissao = _parse_html(fromstring(requests.get(qr_code).text))
     _download_images(qr_code, _build_file_name(data_de_emissao, 
